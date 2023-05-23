@@ -11,4 +11,5 @@ A simple Typescript server for monitoring your local Mineplex Network
 ``cd MineplexMonitor && npm install``
 
 3. Start the server!
+
 ``npm run prod``
