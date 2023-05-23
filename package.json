@@ -8,7 +8,8 @@
   },
   "author": "timing1337",
   "scripts": {
-    "main": "npx ts-node-dev --respawn --transpile-only true src/index.ts"
+    "dev": "npx ts-node-dev --respawn --transpile-only true src/index.ts",
+    "prod": "ts-node src/index.ts"
   },
   "license": "MIT",
   "bugs": {
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "ts-node-dev": "^2.0.0",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "ts-node": "^10.9.1"
   }
 }
