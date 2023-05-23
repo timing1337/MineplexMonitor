@@ -13,6 +13,12 @@ export type AccountToken = {
     Punishments: PunishmentToken[];
 }
 
+export type PunishToken = {
+    Name: string,
+    Time: number,
+    Punishments: PunishmentToken[],
+}
+
 export type AccountTransactionToken = {
     Date: string,
     SalesPackageName: string,
@@ -121,8 +127,8 @@ export class DatabaseManager {
             AccountId: account.id,
             Name: account.name,
             Rank: "PLAYER", //Defaulted
-            Punishments: [],
             Time: Date.now(),
+            Punishments: [],
             DonorToken: {
                 Gems: account.gems,
                 Coins: account.coins,
@@ -143,20 +149,39 @@ export class DatabaseManager {
                 accountId: account.id,
             }
         })
+
         if(accountRank.length > 0){
             accountToken.Rank = accountRank[0].rankIdentifier;
         }
 
         //Load Punishment
+
+        const punishClient = await DatabaseManager.getPunishClient(account.name);
+        accountToken.Punishments = punishClient.Punishments
+        accountToken.Time = punishClient.Time;
+
+        return accountToken;
+    }
+
+    public static async getPunishClient(name: string): Promise<PunishToken>{
+        const punishToken: PunishToken = {
+            Name: name,
+            Time: Date.now(),
+            Punishments: []
+        }
+
         const punishments = await AccountPunishment.findAll({
             where: {
-                target: account.name
+                target: name
             }
         })
 
         if(punishments.length > 0){
-            accountToken.Punishments = punishments.map(punishment => {
-                const isActive = Date.now() < punishment.time.getTime() - punishment.duration * 3600000 && !punishment.removed;
+            punishToken.Punishments = punishments.map(punishment => {
+                let isActive = punishment.duration < 0 /* is perm */ || Date.now() < punishment.time.getTime() + punishment.duration * 60 * 60 * 3600 /* is expired */;
+                if(punishment.removed){
+                    isActive = false;
+                }
                 return {
                     PunishmentId: punishment.id,
                     Admin: punishment.admin,
@@ -173,6 +198,6 @@ export class DatabaseManager {
                 } as PunishmentToken
             })
         }
-        return accountToken;
+        return punishToken;
     }
 }

@@ -165,7 +165,7 @@ export class AccountPunishment extends Model{
 
   @Column({
     type: DataType.BOOLEAN,
-    allowNull: false,
+    allowNull: true,
   })
 
   removed!: boolean;
@@ -178,7 +178,7 @@ export class AccountPunishment extends Model{
 
   @Column({
     type: DataType.STRING(255),
-    allowNull: false,
+    allowNull: true,
   })
   removedAdmin?: string;
 }
