@@ -26,13 +26,13 @@ export class Config {
     private static getDefaultConfig(): ConfigType {
         return {
             databaseConnection: {
-                address: "127.0.0.1",
+                address: '127.0.0.1',
                 port: 3306,
-                username: "root",
-                password: "root"
+                username: 'root',
+                password: 'root'
             },
             redisConnection: {
-                address: "127.0.0.1",
+                address: '127.0.0.1',
                 port: 6379
             },
             webserver: {
@@ -44,16 +44,16 @@ export class Config {
 
 export type ConfigType = {
     databaseConnection: {
-        address: string,
-        port: number,
-        username: string,
-        password: string,
-    },
+        address: string;
+        port: number;
+        username: string;
+        password: string;
+    };
     redisConnection: {
-        address: string,
-        port: number,
-    },
+        address: string;
+        port: number;
+    };
     webserver: {
-        listenPort: number
-    }
+        listenPort: number;
+    };
 };
