@@ -61,16 +61,6 @@ export const Login = async (request: FastifyRequest<{
                 uuid: request.body.Uuid
             }
         })
-
-        //Update old punishments
-        await AccountPunishment.update({
-            name: request.body.Name
-        }, {
-            where: {
-                name: account.name
-            }
-        })
-
         account.name = request.body.Name;
     }
 
@@ -81,7 +71,11 @@ export const Login = async (request: FastifyRequest<{
 export const GetPunishClient = async (request: FastifyRequest<{
     Body: string
 }>, reply: FastifyReply) => {
-    const punishClient = await DatabaseManager.getPunishClient(request.body);
+    const account = await DatabaseManager.getAccountByName(request.body);
+    if (!account) {
+        return reply.code(400);
+    }
+    const punishClient = await DatabaseManager.getPunishClient(account);
     reply.send(JSON.stringify(punishClient));
 }
 
@@ -101,19 +95,21 @@ export const Punish = async (request: FastifyRequest<{
         reply.send(PunishmentResponse.AccountDoesNotExist)
         return;
     }
-
-    await AccountPunishment.create({
-        target: request.body.Target,
-        admin: request.body.Admin,
-        category: request.body.Category,
-        sentence: request.body.Sentence,
-        time: Date.now(),
-        reason: request.body.Reason,
-        duration: request.body.Duration,
-        severity: request.body.Severity,
-        removed: false
-    })
-
+    try{
+        await AccountPunishment.create({
+            accountId: account.id,
+            admin: request.body.Admin,
+            category: request.body.Category,
+            sentence: request.body.Sentence,
+            time: Date.now(),
+            reason: request.body.Reason,
+            duration: request.body.Duration,
+            severity: request.body.Severity,
+            removed: false
+        })
+    }catch(ex){
+        logger.error(ex);
+    }
     reply.send(PunishmentResponse.Punished);
 }
 

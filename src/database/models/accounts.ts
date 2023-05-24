@@ -108,11 +108,11 @@ export class AccountPunishment extends Model{
   id!: number;
 
   @Column({
-    type: DataType.STRING(20),
+    type: DataType.INTEGER,
     allowNull: false,
   })
 
-  target!: string;
+  accountId!: string;
 
   @Column({
     type: DataType.STRING(255),

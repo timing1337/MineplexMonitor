@@ -156,23 +156,23 @@ export class DatabaseManager {
 
         //Load Punishment
 
-        const punishClient = await DatabaseManager.getPunishClient(account.name);
+        const punishClient = await DatabaseManager.getPunishClient(account);
         accountToken.Punishments = punishClient.Punishments
         accountToken.Time = punishClient.Time;
 
         return accountToken;
     }
 
-    public static async getPunishClient(name: string): Promise<PunishToken>{
+    public static async getPunishClient(account: Account): Promise<PunishToken>{
         const punishToken: PunishToken = {
-            Name: name,
+            Name: account.name,
             Time: Date.now(),
             Punishments: []
         }
 
         const punishments = await AccountPunishment.findAll({
             where: {
-                target: name
+                accountId: account.id
             }
         })
 
