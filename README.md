@@ -1,6 +1,9 @@
 # MineplexMonitor
 A simple Typescript server for monitoring your local Mineplex Network
 
+## Mineplex's Source code
+[mineplex-crepe](https://git.crepe.moe/timing/mineplex-crepe/)
+
 ## Installation
 1. Clone the repo
 
