@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import {
     CoinReward, GemReward,
     GetAccount,
-    GetAccountByUUID,
+    GetAccountByUUID, GetMatches,
     GetPunishClient,
     Login,
     Punish,
@@ -56,6 +56,12 @@ async function playerAccountRouter(fastify: FastifyInstance) {
         method: 'POST',
         url: '/GemReward',
         handler: GemReward
+    })
+
+    fastify.route({
+        method: 'POST',
+        url: '/GetMatches',
+        handler: GetMatches
     })
 }
 

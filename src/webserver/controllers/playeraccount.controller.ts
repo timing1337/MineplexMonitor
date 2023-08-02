@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { DatabaseManager } from '../../database/database';
 import { Account, AccountPunishment } from '../../database/models/accounts';
 import Logger from '../../utils/log';
+import {Op} from "sequelize";
 
 const logger = new Logger('PlayerAccount');
 
@@ -143,6 +144,26 @@ export const GemReward = async (
         return;
     })
     reply.send(true);
+};
+
+export const GetMatches = async (
+    request: FastifyRequest<{
+        Body: string;
+    }>,
+    reply: FastifyReply
+) => {
+    const accounts = await Account.findAll({
+        where: {
+            name: {
+                [Op.like]: request.body + '%'
+            }
+        }
+    })
+    const r: string[] = [];
+    accounts.forEach(value => {
+        r.push(value.name);
+    })
+    reply.send(r);
 };
 
 export const GetPunishClient = async (
