@@ -79,6 +79,72 @@ export const Login = async (
     reply.send(JSON.stringify(accountToken));
 };
 
+export const CoinReward = async (
+    request: FastifyRequest<{
+        Body: {
+            Source: string;
+            Name: string;
+            Amount: number;
+        }
+    }>,
+    reply: FastifyReply
+) => {
+    const account = await DatabaseManager.getAccountByName(request.body.Name);
+    if (!account) {
+        reply.send(false);
+        return;
+    }
+
+    await Account.update(
+        {
+            coins: account?.coins + request.body.Amount
+        },
+        {
+            where: {
+                name: account?.name,
+                uuid: account?.uuid
+            }
+        }
+    ).catch(e => {
+        reply.send(false);
+        return;
+    })
+    reply.send(true);
+};
+
+export const GemReward = async (
+    request: FastifyRequest<{
+        Body: {
+            Source: string;
+            Name: string;
+            Amount: number;
+        }
+    }>,
+    reply: FastifyReply
+) => {
+    const account = await DatabaseManager.getAccountByName(request.body.Name);
+    if (!account) {
+        reply.send(false);
+        return;
+    }
+
+    await Account.update(
+        {
+            gems: account?.gems + request.body.Amount
+        },
+        {
+            where: {
+                name: account?.name,
+                uuid: account?.uuid
+            }
+        }
+    ).catch(e => {
+        reply.send(false);
+        return;
+    })
+    reply.send(true);
+};
+
 export const GetPunishClient = async (
     request: FastifyRequest<{
         Body: string;
