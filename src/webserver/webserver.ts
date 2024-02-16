@@ -17,6 +17,7 @@ export class Webserver {
         server.register(playerAccountRouter, { prefix: '/PlayerAccount' });
         server.register(antispamRoute, { prefix: '/chat' });
         server.register(boosterRoute, { prefix: '/booster' });
+	server.register(dominateRoute, { prefix: '/Dominate' });
 
         server.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
             reply.send('Mineplex Backend!');
