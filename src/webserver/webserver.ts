@@ -4,6 +4,7 @@ import Logger from '../utils/log';
 import antispamRoute from './routes/antispam.route';
 import boosterRoute from './routes/booster.route';
 import playerAccountRouter from './routes/playeraccount.route';
+import dominateRoute from './routes/dominate.route';
 
 export class Webserver {
     public static readonly logger: Logger = new Logger('Webserver');
@@ -17,7 +18,7 @@ export class Webserver {
         server.register(playerAccountRouter, { prefix: '/PlayerAccount' });
         server.register(antispamRoute, { prefix: '/chat' });
         server.register(boosterRoute, { prefix: '/booster' });
-	server.register(dominateRoute, { prefix: '/Dominate' });
+        server.register(dominateRoute, { prefix: '/Dominate' });
 
         server.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
             reply.send('Mineplex Backend!');
