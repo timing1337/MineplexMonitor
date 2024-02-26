@@ -13,6 +13,60 @@ export enum PunishmentResponse {
     NotPunished = 'NotPunished'
 }
 
+export async function CoinReward(
+    request: FastifyRequest<{
+        Body: {
+            Source: string;
+            Name: string;
+            Amount: number;
+        }
+    }>,
+    reply: FastifyReply
+) {
+    const account = await DatabaseManager.getAccountByName(request.body.Name);
+    if (!account) return reply.code(400);
+    if(request.body.Amount < 0) return reply.code(400);
+    await Account.update(
+        {
+            coins: account?.coins + request.body.Amount
+        },
+        {
+            where: {
+                name: account?.name,
+                uuid: account?.uuid
+            }
+        }
+    );
+    reply.send(true);
+};
+
+export async function GemReward(
+    request: FastifyRequest<{
+        Body: {
+            Source: string;
+            Name: string;
+            Amount: number;
+        }
+    }>,
+    reply: FastifyReply
+) {
+    const account = await DatabaseManager.getAccountByName(request.body.Name);
+    if (!account) return reply.code(400)
+    if(request.body.Amount < 0) return reply.code(400);
+    await Account.update(
+        {
+            gems: account?.gems + request.body.Amount
+        },
+        {
+            where: {
+                name: account?.name,
+                uuid: account?.uuid
+            }
+        }
+    );
+    reply.send(true);
+};
+
 export async function GetMatches(
     request: FastifyRequest<{
         Body: string;
@@ -29,9 +83,7 @@ export async function GetAccount(
     reply: FastifyReply
 ) {
     const account = await DatabaseManager.getAccountByName(request.body);
-    if (!account) {
-        return reply.code(400);
-    }
+    if (!account) return reply.code(400);
     const accountToken = await DatabaseManager.getAccountToken(account);
     reply.send(JSON.stringify(accountToken));
 }
@@ -43,9 +95,7 @@ export async function GetAccountByUUID(
     reply: FastifyReply
 ) {
     const account = await DatabaseManager.getAccountByUUID(request.body);
-    if (!account) {
-        return reply.code(400);
-    }
+    if (!account) return reply.code(400);
     const accountToken = await DatabaseManager.getAccountToken(account);
     reply.send(JSON.stringify(accountToken));
 }
@@ -64,9 +114,7 @@ export async function Login(
     const account = await DatabaseManager.getAccountByUUID(request.body.Uuid);
 
     //Well **assuming server already makes an account before request**, this would be impossible to happen
-    if (!account) {
-        return reply.code(400);
-    }
+    if (!account) return reply.code(400);
 
     if (account.name !== request.body.Name) {
         //Ehm... what the fuck idk if this is ideal or not
@@ -95,9 +143,7 @@ export async function GetPunishClient(
     reply: FastifyReply
 ) {
     const account = await DatabaseManager.getAccountByName(request.body);
-    if (!account) {
-        return reply.code(400);
-    }
+    if (!account) return reply.code(400);
     const punishClient = await DatabaseManager.getPunishClient(account);
     reply.send(JSON.stringify(punishClient));
 }
@@ -117,10 +163,7 @@ export async function Punish(
     reply: FastifyReply
 ) {
     const account = await DatabaseManager.getAccountByName(request.body.Target);
-    if (!account) {
-        reply.send(PunishmentResponse.AccountDoesNotExist);
-        return;
-    }
+    if (!account) return reply.send(PunishmentResponse.AccountDoesNotExist);
     try {
         await AccountPunishment.create({
             accountId: account.id,
@@ -151,12 +194,8 @@ export async function RemovePunishment(
     reply: FastifyReply
 ) {
     const account = await DatabaseManager.getAccountByName(request.body.Target);
-
     //how did this even happen???
-    if (!account) {
-        reply.send(PunishmentResponse.AccountDoesNotExist);
-        return;
-    }
+    if (!account) reply.send(PunishmentResponse.AccountDoesNotExist);
 
     await AccountPunishment.update(
         {

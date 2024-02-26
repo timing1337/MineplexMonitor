@@ -16,3 +16,16 @@ export async function Chat(
     rsp.isShadowMuted = false;
     reply.send(JSON.stringify(rsp));
 }
+
+export async function ChatFilter(
+    request: FastifyRequest<{
+        Body: {
+            parts: {
+                content: string
+            }[]
+        };
+    }>,
+    reply: FastifyReply
+) {
+    console.log(request.body);
+}

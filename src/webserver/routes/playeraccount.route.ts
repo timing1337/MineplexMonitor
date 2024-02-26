@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { GetAccount, GetAccountByUUID, GetMatches, GetPunishClient, Login, Punish, RemovePunishment } from '../controllers/playeraccount.controller';
+import { CoinReward, GemReward, GetAccount, GetAccountByUUID, GetMatches, GetPunishClient, Login, Punish, RemovePunishment } from '../controllers/playeraccount.controller';
 
 async function playerAccountRouter(fastify: FastifyInstance) {
     fastify.route({
@@ -42,6 +42,18 @@ async function playerAccountRouter(fastify: FastifyInstance) {
         method: 'POST',
         url: '/GetMatches',
         handler: GetMatches
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/CoinReward',
+        handler: CoinReward
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/GemReward',
+        handler: GemReward
     });
 }
 

@@ -1,11 +1,17 @@
 import { FastifyInstance } from 'fastify';
-import { Chat } from '../controllers/antispam.controller';
+import { Chat, ChatFilter } from '../controllers/antispam.controller';
 
 async function antispamRoute(fastify: FastifyInstance) {
     fastify.route({
         method: 'POST',
         url: '/:serverPlugin',
         handler: Chat
+    });
+
+    fastify.route({
+        method: 'POST',
+        url: '/content/item/moderate',
+        handler: ChatFilter
     });
 }
 
