@@ -13,35 +13,44 @@ export enum PunishmentResponse {
     NotPunished = 'NotPunished'
 }
 
-export const GetAccount = async (
+export async function GetMatches(
     request: FastifyRequest<{
         Body: string;
     }>,
     reply: FastifyReply
-) => {
+) {
+    reply.send(await DatabaseManager.getAccountNamesMatching(request.body));
+}
+
+export async function GetAccount(
+    request: FastifyRequest<{
+        Body: string;
+    }>,
+    reply: FastifyReply
+) {
     const account = await DatabaseManager.getAccountByName(request.body);
     if (!account) {
         return reply.code(400);
     }
     const accountToken = await DatabaseManager.getAccountToken(account);
     reply.send(JSON.stringify(accountToken));
-};
+}
 
-export const GetAccountByUUID = async (
+export async function GetAccountByUUID(
     request: FastifyRequest<{
         Body: string;
     }>,
     reply: FastifyReply
-) => {
+) {
     const account = await DatabaseManager.getAccountByUUID(request.body);
     if (!account) {
         return reply.code(400);
     }
     const accountToken = await DatabaseManager.getAccountToken(account);
     reply.send(JSON.stringify(accountToken));
-};
+}
 
-export const Login = async (
+export async function Login(
     request: FastifyRequest<{
         Body: {
             Name: string;
@@ -51,7 +60,7 @@ export const Login = async (
         };
     }>,
     reply: FastifyReply
-) => {
+) {
     const account = await DatabaseManager.getAccountByUUID(request.body.Uuid);
 
     //Well **assuming server already makes an account before request**, this would be impossible to happen
@@ -77,23 +86,23 @@ export const Login = async (
 
     const accountToken = await DatabaseManager.getAccountToken(account);
     reply.send(JSON.stringify(accountToken));
-};
+}
 
-export const GetPunishClient = async (
+export async function GetPunishClient(
     request: FastifyRequest<{
         Body: string;
     }>,
     reply: FastifyReply
-) => {
+) {
     const account = await DatabaseManager.getAccountByName(request.body);
     if (!account) {
         return reply.code(400);
     }
     const punishClient = await DatabaseManager.getPunishClient(account);
     reply.send(JSON.stringify(punishClient));
-};
+}
 
-export const Punish = async (
+export async function Punish(
     request: FastifyRequest<{
         Body: {
             Target: string;
@@ -106,7 +115,7 @@ export const Punish = async (
         };
     }>,
     reply: FastifyReply
-) => {
+) {
     const account = await DatabaseManager.getAccountByName(request.body.Target);
     if (!account) {
         reply.send(PunishmentResponse.AccountDoesNotExist);
@@ -128,9 +137,9 @@ export const Punish = async (
         logger.error(ex);
     }
     reply.send(PunishmentResponse.Punished);
-};
+}
 
-export const RemovePunishment = async (
+export async function RemovePunishment(
     request: FastifyRequest<{
         Body: {
             PunishmentId: number;
@@ -140,7 +149,7 @@ export const RemovePunishment = async (
         };
     }>,
     reply: FastifyReply
-) => {
+) {
     const account = await DatabaseManager.getAccountByName(request.body.Target);
 
     //how did this even happen???
@@ -163,4 +172,4 @@ export const RemovePunishment = async (
     );
 
     reply.send(PunishmentResponse.PunishmentRemoved);
-};
+}

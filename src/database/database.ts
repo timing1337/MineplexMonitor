@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Config } from '../utils/config';
 import Logger from '../utils/log';
@@ -81,7 +82,8 @@ export class DatabaseManager {
             password: databaseConnectionConfig.password,
             dialect: 'mysql',
             models: [Account, AccountPunishment, AccountRank],
-            database: 'account'
+            database: 'account',
+            logging: false
         });
 
         try {
@@ -89,8 +91,19 @@ export class DatabaseManager {
             DatabaseManager.logger.log(`Successfully connected to ${databaseConnectionConfig.address}:${databaseConnectionConfig.port} as ${databaseConnectionConfig.username}`);
         } catch (ex) {
             DatabaseManager.logger.log(`There was an issue connecting to ${databaseConnectionConfig.address}:${databaseConnectionConfig.port}. Shutting down...`);
+            DatabaseManager.logger.error(ex);
             process.exit(0);
         }
+    }
+
+    public static async getAccountNamesMatching(match: string): Promise<string[]> {
+        const accounts = await Account.findAll({
+            where: {
+                name: { [Op.like]: `%${match}%` }
+            },
+            order: [['lastLogin', 'DESC']]
+        });
+        return accounts.map((account) => account.name);
     }
 
     public static async getAccountByName(name: string): Promise<Account | undefined> {
@@ -111,7 +124,7 @@ export class DatabaseManager {
                 uuid: uuid
             }
         });
-        if (account.length < 1) {
+        if (account.length == 0) {
             return;
         }
         return account[0];

@@ -3,6 +3,6 @@ import Logger from '../../utils/log';
 
 const logger = new Logger('Dominate');
 
-export const GetSkills = async (request: FastifyRequest, reply: FastifyReply) => {
+export async function GetSkills(request: FastifyRequest, reply: FastifyReply) {
     reply.send(JSON.stringify([]));
-};
+}

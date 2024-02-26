@@ -3,8 +3,8 @@ import { Config } from '../utils/config';
 import Logger from '../utils/log';
 import antispamRoute from './routes/antispam.route';
 import boosterRoute from './routes/booster.route';
-import playerAccountRouter from './routes/playeraccount.route';
 import dominateRoute from './routes/dominate.route';
+import playerAccountRouter from './routes/playeraccount.route';
 
 export class Webserver {
     public static readonly logger: Logger = new Logger('Webserver');

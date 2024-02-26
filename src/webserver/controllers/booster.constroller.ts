@@ -3,21 +3,19 @@ import Logger from '../../utils/log';
 
 const logger = new Logger('Boosters');
 
-export const GetBoosters = async (request: FastifyRequest, reply: FastifyReply) => {
-    //TOOD: Boosters
+export async function GetBoosters(request: FastifyRequest, reply: FastifyReply) {
     reply.send(JSON.stringify({}));
-};
+}
 
-export const GetBoostersFromGroup = async (
+export async function GetBoostersFromGroup(
     request: FastifyRequest<{
         Params: {
             serverGroup: string;
         };
     }>,
     reply: FastifyReply
-) => {
-    //TOOD: Boosters
+) {
     const serverGroup = request.params.serverGroup;
     logger.log(`Retrieving boosters from group ${serverGroup}`);
     reply.send(JSON.stringify({}));
-};
+}
