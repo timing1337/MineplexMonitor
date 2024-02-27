@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { CoinReward, GemReward, GetAccount, GetAccountByUUID, GetMatches, GetPunishClient, Login, Punish, RemovePunishment } from '../controllers/playeraccount.controller';
+import { CoinReward, GemReward, GetAccount, GetAccountByUUID, GetMatches, GetPunishClient, Login, Punish, PurchaseUnknownSalesPackage, RemovePunishment } from '../controllers/playeraccount.controller';
 
 async function playerAccountRouter(fastify: FastifyInstance) {
     fastify.route({
@@ -55,6 +55,13 @@ async function playerAccountRouter(fastify: FastifyInstance) {
         url: '/GemReward',
         handler: GemReward
     });
+
+    fastify.route({
+        method: 'POST',
+        url: '/PurchaseUnknownSalesPackage',
+        handler: PurchaseUnknownSalesPackage
+    });
 }
+
 
 export default playerAccountRouter;

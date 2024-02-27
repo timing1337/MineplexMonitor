@@ -3,6 +3,11 @@ import { Config } from "../utils/config";
 import Logger from "../utils/log";
 import { ServerGroupPrefix } from "./server/server_group";
 
+type ServerStatus = {
+    totalServers: number,
+    availableServers: number,
+}
+
 export default class RedisManager {
 
     public static instance: Redis;
@@ -16,11 +21,42 @@ export default class RedisManager {
         })
 
         this.loadServerGroups();
+        this.initServerStatus();
     }
 
-    public static async loadServerGroups(){
+    //Manually update totalServers/joinableServer Status
+    public static async initServerStatus() {
+        var doServersCheck = async function () {
+            const serverStatuses: Map<string, ServerStatus> = new Map<string, ServerStatus>();
+            const serverStatusKeys = await RedisManager.instance.keys("serverstatus.minecraft.US.*");
+            for (const serverKey of serverStatusKeys) {
+                const serverStatus = JSON.parse((await RedisManager.instance.get(serverKey))!);
+                if(serverStatus["_tps"] == 0){ //server died, might as well delete this.
+                    await RedisManager.instance.del(serverKey);
+                    continue;
+                }
+                const serverGroup = serverStatus["_group"];
+                if (!serverStatuses.has(serverGroup)) {
+                    serverStatuses.set(serverGroup, {
+                        availableServers: 0,
+                        totalServers: 0
+                    });
+                }
+                serverStatuses.get(serverGroup)!.totalServers++;
+                if(serverStatus["_playerCount"] < serverStatus["_maxPlayerCount"]) serverStatuses.get(serverGroup)!.availableServers++;
+            }
+            serverStatuses.forEach(async (status, key) => {
+                await RedisManager.instance.hset(`servergroups.${key}`, "totalServers", status.totalServers);
+                await RedisManager.instance.hset(`servergroups.${key}`, "joinableServers", status.availableServers);
+            })
+            setTimeout(doServersCheck, 1000);
+        }
+        doServersCheck();
+    }
+
+    public static async loadServerGroups() {
         const serverGroups = await RedisManager.instance.smembers("servergroups");
-        if(serverGroups.length === 0 || !serverGroups.includes("Lobby")){
+        if (serverGroups.length === 0 || !serverGroups.includes("Lobby")) {
             await RedisManager.initializeServerGroup("Lobby")
             serverGroups.push(ServerGroupPrefix.Lobby);
             await RedisManager.initializeServerGroup("MicroBattles", "Micro Battles", "Micro");
@@ -30,10 +66,10 @@ export default class RedisManager {
         RedisManager.logger.log(`There are currently ${serverGroups.length} groups: ${serverGroups.join(", ")}`);
     }
 
-    public static async initializeServerGroup(name: string, npcName: string = "", gameRotation: string = name){
+    public static async initializeServerGroup(name: string, npcName: string = "", gameRotation: string = name) {
         const serverGroupKey = `servergroups.${name}`;
 
-        if(await RedisManager.instance.exists(serverGroupKey)) return;
+        if (await RedisManager.instance.exists(serverGroupKey)) return;
 
         const isArcade = !(name.includes("Lobby") || name.includes("Hub")); //Safe to assume this i guess
         const startingGroupPort = 25600 + await RedisManager.instance.scard("servergroups") * 100; //with this way of doing, you'll prob have 100 servers max for each group, ig thats fair...?
@@ -42,7 +78,7 @@ export default class RedisManager {
         await RedisManager.instance.hsetnx(serverGroupKey, "name", name);
         await RedisManager.instance.hsetnx(serverGroupKey, "prefix", ServerGroupPrefix[name as keyof typeof ServerGroupPrefix] ?? name);
         await RedisManager.instance.hsetnx(serverGroupKey, "ram", 512); //TODO: ehm stop hardcoding this waaawa
-        await RedisManager.instance.hsetnx(serverGroupKey, "cpu", 1); 
+        await RedisManager.instance.hsetnx(serverGroupKey, "cpu", 1);
         await RedisManager.instance.hsetnx(serverGroupKey, "totalServers", 0);
         await RedisManager.instance.hsetnx(serverGroupKey, "joinableServers", 0);
         await RedisManager.instance.hsetnx(serverGroupKey, "portSection", startingGroupPort);
@@ -52,9 +88,9 @@ export default class RedisManager {
         await RedisManager.instance.hsetnx(serverGroupKey, "serverType", isArcade ? "Minigames" : "dedicated");
         await RedisManager.instance.hsetnx(serverGroupKey, "addNoCheat", "true");
         await RedisManager.instance.hsetnx(serverGroupKey, "addWorldEdit", "false");
-        if(npcName !== "") await RedisManager.instance.hsetnx(serverGroupKey, "npcName", npcName);
+        if (npcName !== "") await RedisManager.instance.hsetnx(serverGroupKey, "npcName", npcName);
 
-        if(isArcade){
+        if (isArcade) {
             await RedisManager.instance.hsetnx(serverGroupKey, "tournament", "false");
             await RedisManager.instance.hsetnx(serverGroupKey, "tournamentPoints", "false");
             await RedisManager.instance.hsetnx(serverGroupKey, "teamRejoin", "false");

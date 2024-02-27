@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { DatabaseManager } from '../../database/database';
 import { Account, AccountPunishment } from '../../database/models/accounts';
 import Logger from '../../utils/log';
+import { UnknownPurchaseToken } from '../token/donor';
 
 const logger = new Logger('PlayerAccount');
 
@@ -11,6 +12,20 @@ export enum PunishmentResponse {
     AccountDoesNotExist = 'AccountDoesNotExist',
     InsufficientPrivileges = 'InsufficientPrivileges',
     NotPunished = 'NotPunished'
+}
+
+export enum TransactionResponse {
+    InsufficientFunds = 'InsufficientFunds',
+    Failed = 'Failed',
+    Success = 'Success',
+    AlreadyOwns = 'AlreadyOwns',
+}
+
+export async function PurchaseUnknownSalesPackage(request: FastifyRequest<{ Body: UnknownPurchaseToken }>, reply: FastifyReply){
+    console.log(request.body)
+    const account = await DatabaseManager.getAccountByName(request.body.AccountName);
+    if(!account) return reply.code(400);
+    reply.send(TransactionResponse.Success);
 }
 
 export async function CoinReward(
