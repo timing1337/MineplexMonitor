@@ -17,6 +17,7 @@ export async function Chat(
     reply.send(JSON.stringify(rsp));
 }
 
+//TODO: Https
 export async function ChatFilter(
     request: FastifyRequest<{
         Body: {

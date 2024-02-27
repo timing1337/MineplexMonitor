@@ -1,8 +1,7 @@
 import { Redis } from "ioredis";
 import { Config } from "../utils/config";
 import Logger from "../utils/log";
-import { ServerGroup } from "./server/server_group";
-import Server from "mysql2/typings/mysql/lib/Server";
+import { ServerGroupPrefix } from "./server/server_group";
 
 export default class RedisManager {
 
@@ -23,15 +22,15 @@ export default class RedisManager {
         const serverGroups = await RedisManager.instance.smembers("servergroups");
         if(serverGroups.length === 0 || !serverGroups.includes("Lobby")){
             await RedisManager.initializeServerGroup("Lobby")
-            serverGroups.push(ServerGroup.Lobby);
-            await RedisManager.initializeServerGroup("MicroBattles", "Micro");
-            serverGroups.push(ServerGroup.MicroBattles);
+            serverGroups.push(ServerGroupPrefix.Lobby);
+            await RedisManager.initializeServerGroup("MicroBattles", "Micro Battles", "Micro");
+            serverGroups.push(ServerGroupPrefix.MicroBattles);
             RedisManager.logger.log("Missing Lobby group, adding....");
         }
         RedisManager.logger.log(`There are currently ${serverGroups.length} groups: ${serverGroups.join(", ")}`);
     }
 
-    public static async initializeServerGroup(name: string, gameRotation: string = name){
+    public static async initializeServerGroup(name: string, npcName: string = "", gameRotation: string = name){
         const serverGroupKey = `servergroups.${name}`;
 
         if(await RedisManager.instance.exists(serverGroupKey)) return;
@@ -41,7 +40,7 @@ export default class RedisManager {
 
         await RedisManager.instance.sadd("servergroups", name);
         await RedisManager.instance.hsetnx(serverGroupKey, "name", name);
-        await RedisManager.instance.hsetnx(serverGroupKey, "prefix", ServerGroup[name as keyof typeof ServerGroup] ?? name);
+        await RedisManager.instance.hsetnx(serverGroupKey, "prefix", ServerGroupPrefix[name as keyof typeof ServerGroupPrefix] ?? name);
         await RedisManager.instance.hsetnx(serverGroupKey, "ram", 512); //TODO: ehm stop hardcoding this waaawa
         await RedisManager.instance.hsetnx(serverGroupKey, "cpu", 1); 
         await RedisManager.instance.hsetnx(serverGroupKey, "totalServers", 0);
@@ -53,6 +52,7 @@ export default class RedisManager {
         await RedisManager.instance.hsetnx(serverGroupKey, "serverType", isArcade ? "Minigames" : "dedicated");
         await RedisManager.instance.hsetnx(serverGroupKey, "addNoCheat", "true");
         await RedisManager.instance.hsetnx(serverGroupKey, "addWorldEdit", "false");
+        if(npcName !== "") await RedisManager.instance.hsetnx(serverGroupKey, "npcName", npcName);
 
         if(isArcade){
             await RedisManager.instance.hsetnx(serverGroupKey, "tournament", "false");

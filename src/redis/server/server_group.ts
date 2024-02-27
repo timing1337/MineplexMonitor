@@ -1,4 +1,4 @@
-export enum ServerGroup{
+export enum ServerGroupPrefix{
     Lobby = "Lobby",
     MasterBuilders = "BLD",
     DrawMyThing = "DMT",
