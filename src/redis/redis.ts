@@ -25,6 +25,8 @@ export default class RedisManager {
     }
 
     //Manually update totalServers/joinableServer Status
+    //Ideally you wouldnt have to do this if you have ServerMonitor
+    //TODO: Implement the same thing :yay!
     public static async initServerStatus() {
         var doServersCheck = async function () {
             const serverStatuses: Map<string, ServerStatus> = new Map<string, ServerStatus>();
