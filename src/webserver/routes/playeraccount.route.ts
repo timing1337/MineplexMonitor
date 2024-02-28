@@ -63,5 +63,4 @@ async function playerAccountRouter(fastify: FastifyInstance) {
     });
 }
 
-
 export default playerAccountRouter;

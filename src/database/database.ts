@@ -2,9 +2,9 @@ import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Config } from '../utils/config';
 import Logger from '../utils/log';
-import { Account, AccountPunishment, AccountRank } from './models/accounts';
 import { AccountToken } from '../webserver/token/account';
-import { PunishToken, PunishmentToken } from '../webserver/token/punish';
+import { PunishmentToken, PunishToken } from '../webserver/token/punish';
+import { Account, AccountPunishment, AccountRank } from './models/accounts';
 
 export class DatabaseManager {
     private static sequelize: Sequelize;

@@ -22,8 +22,8 @@ export async function ChatFilter(
     request: FastifyRequest<{
         Body: {
             parts: {
-                content: string
-            }[]
+                content: string;
+            }[];
         };
     }>,
     reply: FastifyReply

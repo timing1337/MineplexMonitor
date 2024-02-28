@@ -18,13 +18,13 @@ export enum TransactionResponse {
     InsufficientFunds = 'InsufficientFunds',
     Failed = 'Failed',
     Success = 'Success',
-    AlreadyOwns = 'AlreadyOwns',
+    AlreadyOwns = 'AlreadyOwns'
 }
 
-export async function PurchaseUnknownSalesPackage(request: FastifyRequest<{ Body: UnknownPurchaseToken }>, reply: FastifyReply){
-    console.log(request.body)
+export async function PurchaseUnknownSalesPackage(request: FastifyRequest<{ Body: UnknownPurchaseToken }>, reply: FastifyReply) {
+    console.log(request.body);
     const account = await DatabaseManager.getAccountByName(request.body.AccountName);
-    if(!account) return reply.code(400);
+    if (!account) return reply.code(400);
     reply.send(TransactionResponse.Success);
 }
 
@@ -34,13 +34,13 @@ export async function CoinReward(
             Source: string;
             Name: string;
             Amount: number;
-        }
+        };
     }>,
     reply: FastifyReply
 ) {
     const account = await DatabaseManager.getAccountByName(request.body.Name);
     if (!account) return reply.code(400);
-    if(request.body.Amount < 0) return reply.code(400);
+    if (request.body.Amount < 0) return reply.code(400);
     await Account.update(
         {
             coins: account?.coins + request.body.Amount
@@ -53,7 +53,7 @@ export async function CoinReward(
         }
     );
     reply.send(true);
-};
+}
 
 export async function GemReward(
     request: FastifyRequest<{
@@ -61,13 +61,13 @@ export async function GemReward(
             Source: string;
             Name: string;
             Amount: number;
-        }
+        };
     }>,
     reply: FastifyReply
 ) {
     const account = await DatabaseManager.getAccountByName(request.body.Name);
-    if (!account) return reply.code(400)
-    if(request.body.Amount < 0) return reply.code(400);
+    if (!account) return reply.code(400);
+    if (request.body.Amount < 0) return reply.code(400);
     await Account.update(
         {
             gems: account?.gems + request.body.Amount
@@ -80,7 +80,7 @@ export async function GemReward(
         }
     );
     reply.send(true);
-};
+}
 
 export async function GetMatches(
     request: FastifyRequest<{

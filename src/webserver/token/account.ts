@@ -1,5 +1,5 @@
-import { DonorToken } from "./donor";
-import { PunishmentToken } from "./punish";
+import { DonorToken } from './donor';
+import { PunishmentToken } from './punish';
 
 export type AccountToken = {
     AccountId: number;
