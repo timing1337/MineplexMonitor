@@ -26,6 +26,7 @@ export default class DonationRepository {
             coins: token.CoinPurchase ? token.Cost : 0,
             gems: token.CoinPurchase ? 0: token.Cost,
             salesPackageName: token.SalesPackageName,
+            date: new Date()
         })
 
         if(token.CoinPurchase){
@@ -74,7 +75,8 @@ export default class DonationRepository {
         await AccountShardTransactions.create({
             accountId: account.id!,
             source: token.Source,
-            amount: token.Amount
+            amount: token.Amount,
+            date: new Date()
         });
 
         return true;
