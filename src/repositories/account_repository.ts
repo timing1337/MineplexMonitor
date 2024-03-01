@@ -45,7 +45,7 @@ export default class AccountRepository {
         const accountToken: AccountToken = {
             AccountId: account.id!,
             Name: account.name,
-            Rank: (await AccountRanks.findAll({ where: { accountId: account.id } })).find((rank) => rank.primaryGroup == 1)!.rankIdentifier! ?? 'PLAYER',
+            Rank: (await AccountRanks.findAll({ where: { accountId: account.id } })).find((rank) => rank.primaryGroup == 1)?.rankIdentifier ?? 'PLAYER',
             Time: Date.now(),
             Punishments: [],
             DonorToken: {
