@@ -1,140 +1,51 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { DatabaseManager } from '../../database/database';
-import { Account, AccountPunishment } from '../../database/models/accounts';
+import AccountRepository from '../../repositories/account_repository';
+import DonationRepository from '../../repositories/donation_repository';
+import PunishmentRepository from '../../repositories/punishment_repository';
 import Logger from '../../utils/log';
-import { UnknownPurchaseToken } from '../token/donor';
+import { LoginToken } from '../token/account';
+import { CurrencyRewardToken, UnknownPurchaseToken } from '../token/donor';
+import { PunishToken, RemovePunishToken } from '../token/punish';
+import { Accounts } from '../../database/models/accounts';
 
 const logger = new Logger('PlayerAccount');
 
-export enum PunishmentResponse {
-    Punished = 'Punished',
-    PunishmentRemoved = 'PunishmentRemoved',
-    AccountDoesNotExist = 'AccountDoesNotExist',
-    InsufficientPrivileges = 'InsufficientPrivileges',
-    NotPunished = 'NotPunished'
-}
-
-export enum TransactionResponse {
-    InsufficientFunds = 'InsufficientFunds',
-    Failed = 'Failed',
-    Success = 'Success',
-    AlreadyOwns = 'AlreadyOwns'
-}
-
 export async function PurchaseUnknownSalesPackage(request: FastifyRequest<{ Body: UnknownPurchaseToken }>, reply: FastifyReply) {
-    console.log(request.body);
-    const account = await DatabaseManager.getAccountByName(request.body.AccountName);
+    const account = await AccountRepository.getAccountByName(request.body.AccountName);
     if (!account) return reply.code(400);
-    reply.send(TransactionResponse.Success);
 }
 
-export async function CoinReward(
-    request: FastifyRequest<{
-        Body: {
-            Source: string;
-            Name: string;
-            Amount: number;
-        };
-    }>,
-    reply: FastifyReply
-) {
-    const account = await DatabaseManager.getAccountByName(request.body.Name);
-    if (!account) return reply.code(400);
-    if (request.body.Amount < 0) return reply.code(400);
-    await Account.update(
-        {
-            coins: account?.coins + request.body.Amount
-        },
-        {
-            where: {
-                name: account?.name,
-                uuid: account?.uuid
-            }
-        }
-    );
-    reply.send(true);
+export async function CoinReward(request: FastifyRequest<{ Body: CurrencyRewardToken }>, reply: FastifyReply) {
+    reply.send(await DonationRepository.RewardCoins(request.body.Name, request.body.Amount, request.body.Source));
 }
 
-export async function GemReward(
-    request: FastifyRequest<{
-        Body: {
-            Source: string;
-            Name: string;
-            Amount: number;
-        };
-    }>,
-    reply: FastifyReply
-) {
-    const account = await DatabaseManager.getAccountByName(request.body.Name);
-    if (!account) return reply.code(400);
-    if (request.body.Amount < 0) return reply.code(400);
-    await Account.update(
-        {
-            gems: account?.gems + request.body.Amount
-        },
-        {
-            where: {
-                name: account?.name,
-                uuid: account?.uuid
-            }
-        }
-    );
-    reply.send(true);
+export async function GemReward(request: FastifyRequest<{ Body: CurrencyRewardToken }>, reply: FastifyReply) {
+    reply.send(await DonationRepository.RewardGems(request.body.Name, request.body.Amount, request.body.Source));
 }
 
-export async function GetMatches(
-    request: FastifyRequest<{
-        Body: string;
-    }>,
-    reply: FastifyReply
-) {
-    reply.send(await DatabaseManager.getAccountNamesMatching(request.body));
+export async function GetMatches(request: FastifyRequest<{ Body: string }>, reply: FastifyReply) {
+    reply.send(await AccountRepository.getAccountNamesMatching(request.body));
 }
 
-export async function GetAccount(
-    request: FastifyRequest<{
-        Body: string;
-    }>,
-    reply: FastifyReply
-) {
-    const account = await DatabaseManager.getAccountByName(request.body);
+export async function GetAccount(request: FastifyRequest<{ Body: string }>, reply: FastifyReply) {
+    const account = await AccountRepository.getAccountByName(request.body);
     if (!account) return reply.code(400);
-    const accountToken = await DatabaseManager.getAccountToken(account);
+    const accountToken = await AccountRepository.getAccountToken(account);
     reply.send(JSON.stringify(accountToken));
 }
 
-export async function GetAccountByUUID(
-    request: FastifyRequest<{
-        Body: string;
-    }>,
-    reply: FastifyReply
-) {
-    const account = await DatabaseManager.getAccountByUUID(request.body);
+export async function GetAccountByUUID(request: FastifyRequest<{ Body: string }>, reply: FastifyReply) {
+    const account = await AccountRepository.getAccountByUUID(request.body);
     if (!account) return reply.code(400);
-    const accountToken = await DatabaseManager.getAccountToken(account);
+    const accountToken = await AccountRepository.getAccountToken(account);
     reply.send(JSON.stringify(accountToken));
 }
 
-export async function Login(
-    request: FastifyRequest<{
-        Body: {
-            Name: string;
-            IpAddress: string;
-            MacAddress: string;
-            Uuid: string;
-        };
-    }>,
-    reply: FastifyReply
-) {
-    const account = await DatabaseManager.getAccountByUUID(request.body.Uuid);
-
-    //Well **assuming server already makes an account before request**, this would be impossible to happen
+export async function Login(request: FastifyRequest<{ Body: LoginToken }>, reply: FastifyReply) {
+    const account = await AccountRepository.getAccountByUUID(request.body.Uuid);
     if (!account) return reply.code(400);
-
     if (account.name !== request.body.Name) {
-        //Ehm... what the fuck idk if this is ideal or not
-        //Update player name if they change it, uuid should be intact
-        await Account.update(
+        await Accounts.update(
             {
                 name: request.body.Name
             },
@@ -146,84 +57,19 @@ export async function Login(
         );
         account.name = request.body.Name;
     }
-
-    const accountToken = await DatabaseManager.getAccountToken(account);
-    reply.send(JSON.stringify(accountToken));
+    reply.send(JSON.stringify(await AccountRepository.getAccountToken(account)));
 }
 
-export async function GetPunishClient(
-    request: FastifyRequest<{
-        Body: string;
-    }>,
-    reply: FastifyReply
-) {
-    const account = await DatabaseManager.getAccountByName(request.body);
+export async function GetPunishClient(request: FastifyRequest<{ Body: string }>, reply: FastifyReply) {
+    const account = await AccountRepository.getAccountByName(request.body);
     if (!account) return reply.code(400);
-    const punishClient = await DatabaseManager.getPunishClient(account);
-    reply.send(JSON.stringify(punishClient));
+    reply.send(JSON.stringify(await PunishmentRepository.getPunishClient(account)));
 }
 
-export async function Punish(
-    request: FastifyRequest<{
-        Body: {
-            Target: string;
-            Category: string;
-            Sentence: string;
-            Reason: string;
-            Duration: number;
-            Admin: string;
-            Severity: number;
-        };
-    }>,
-    reply: FastifyReply
-) {
-    const account = await DatabaseManager.getAccountByName(request.body.Target);
-    if (!account) return reply.send(PunishmentResponse.AccountDoesNotExist);
-    try {
-        await AccountPunishment.create({
-            accountId: account.id,
-            admin: request.body.Admin,
-            category: request.body.Category,
-            sentence: request.body.Sentence,
-            time: Date.now(),
-            reason: request.body.Reason,
-            duration: request.body.Duration,
-            severity: request.body.Severity,
-            removed: false
-        });
-    } catch (ex) {
-        logger.error(ex);
-    }
-    reply.send(PunishmentResponse.Punished);
+export async function Punish(request: FastifyRequest<{ Body: PunishToken }>, reply: FastifyReply) {
+    reply.send(await PunishmentRepository.Punish(request.body.Target, request.body.Category, request.body.Sentence, request.body.Reason, request.body.Duration, request.body.Admin, request.body.Severity));
 }
 
-export async function RemovePunishment(
-    request: FastifyRequest<{
-        Body: {
-            PunishmentId: number;
-            Target: string;
-            Reason: string;
-            Admin: string;
-        };
-    }>,
-    reply: FastifyReply
-) {
-    const account = await DatabaseManager.getAccountByName(request.body.Target);
-    //how did this even happen???
-    if (!account) reply.send(PunishmentResponse.AccountDoesNotExist);
-
-    await AccountPunishment.update(
-        {
-            removed: true,
-            removedAdmin: request.body.Admin,
-            removedReason: request.body.Reason
-        },
-        {
-            where: {
-                id: request.body.PunishmentId
-            }
-        }
-    );
-
-    reply.send(PunishmentResponse.PunishmentRemoved);
+export async function RemovePunishment(request: FastifyRequest<{ Body: RemovePunishToken }>, reply: FastifyReply) {
+    reply.send(await PunishmentRepository.RemovePunishment(request.body.PunishmentId, request.body.Target, request.body.Reason, request.body.Admin));
 }

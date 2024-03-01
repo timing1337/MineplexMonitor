@@ -13,8 +13,25 @@ export type PunishmentToken = {
     Active: boolean;
 };
 
-export type PunishToken = {
+export type PunishClientToken = {
     Name: string;
     Time: number;
     Punishments: PunishmentToken[];
+};
+
+export type PunishToken = {
+    Target: string;
+    Category: string;
+    Sentence: string;
+    Reason: string;
+    Duration: number;
+    Admin: string;
+    Severity: number;
+};
+
+export type RemovePunishToken = {
+    PunishmentId: number;
+    Target: string;
+    Reason: string;
+    Admin: string;
 };

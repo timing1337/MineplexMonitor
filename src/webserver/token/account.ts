@@ -9,3 +9,10 @@ export type AccountToken = {
     Time: number;
     Punishments: PunishmentToken[];
 };
+
+export type LoginToken = {
+    Name: string;
+    IpAddress: string;
+    MacAddress: string;
+    Uuid: string;
+};

@@ -39,3 +39,9 @@ export type PetToken = {
     PetName: string;
     PetType: string;
 };
+
+export type CurrencyRewardToken = {
+    Source: string;
+    Name: string;
+    Amount: number;
+};

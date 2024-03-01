@@ -18,8 +18,9 @@ export enum ServerGroupPrefix {
     SSM = 'MS',
     SSM2 = 'SSM2',
     ChampionsDomination = 'DOM',
-    ChampionsCaptureTheFlag = 'CTF'
+    ChampionsCaptureTheFlag = 'CTF',
     //Clans
     //Retro
     //Nano
+    NanoGames = 'NANO'
 }
