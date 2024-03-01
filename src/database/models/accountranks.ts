@@ -1,77 +1,26 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes, Model, Optional } from 'sequelize';
+import { Model, Table, Column, DataType, Index, Sequelize, ForeignKey } from "sequelize-typescript";
 
 export interface AccountRanksAttributes {
-    id: number;
+    id?: number;
     accountId: number;
     rankIdentifier?: string;
     primaryGroup?: number;
 }
 
-export type AccountRanksPk = 'id';
-export type AccountRanksId = AccountRanks[AccountRanksPk];
-export type AccountRanksOptionalAttributes = 'id' | 'rankIdentifier' | 'primaryGroup';
-export type AccountRanksCreationAttributes = Optional<AccountRanksAttributes, AccountRanksOptionalAttributes>;
-
-export class AccountRanks extends Model<AccountRanksAttributes, AccountRanksCreationAttributes> implements AccountRanksAttributes {
-    id!: number;
+@Table({ tableName: "accountranks", timestamps: false })
+export class AccountRanks extends Model<AccountRanksAttributes, AccountRanksAttributes> implements AccountRanksAttributes {
+    @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
+    @Index({ name: "PRIMARY", using: "BTREE", order: "ASC", unique: true })
+    id?: number;
+    @Column({ type: DataType.INTEGER })
+    @Index({ name: "additionalIndex", using: "BTREE", order: "ASC", unique: true })
+    @Index({ name: "accountIndex", using: "BTREE", order: "ASC", unique: false })
     accountId!: number;
+    @Column({ allowNull: true, type: DataType.STRING(40), defaultValue: "'PLAYER'" })
+    @Index({ name: "additionalIndex", using: "BTREE", order: "ASC", unique: true })
+    @Index({ name: "rankIndex", using: "BTREE", order: "ASC", unique: false })
     rankIdentifier?: string;
+    @Column({ allowNull: true, type: DataType.TINYINT, defaultValue: "1" })
+    @Index({ name: "additionalIndex", using: "BTREE", order: "ASC", unique: true })
     primaryGroup?: number;
-
-    static initModel(sequelize: Sequelize.Sequelize): typeof AccountRanks {
-        return sequelize.define(
-            'AccountRanks',
-            {
-                id: {
-                    autoIncrement: true,
-                    type: DataTypes.INTEGER,
-                    allowNull: false,
-                    primaryKey: true
-                },
-                accountId: {
-                    type: DataTypes.INTEGER,
-                    allowNull: false
-                },
-                rankIdentifier: {
-                    type: DataTypes.STRING(40),
-                    allowNull: true,
-                    defaultValue: 'PLAYER'
-                },
-                primaryGroup: {
-                    type: DataTypes.BOOLEAN,
-                    allowNull: true,
-                    defaultValue: 1
-                }
-            },
-            {
-                tableName: 'accountranks',
-                timestamps: false,
-                indexes: [
-                    {
-                        name: 'PRIMARY',
-                        unique: true,
-                        using: 'BTREE',
-                        fields: [{ name: 'id' }]
-                    },
-                    {
-                        name: 'additionalIndex',
-                        unique: true,
-                        using: 'BTREE',
-                        fields: [{ name: 'accountId' }, { name: 'rankIdentifier' }, { name: 'primaryGroup' }]
-                    },
-                    {
-                        name: 'accountIndex',
-                        using: 'BTREE',
-                        fields: [{ name: 'accountId' }]
-                    },
-                    {
-                        name: 'rankIndex',
-                        using: 'BTREE',
-                        fields: [{ name: 'rankIdentifier' }]
-                    }
-                ]
-            }
-        ) as typeof AccountRanks;
-    }
 }

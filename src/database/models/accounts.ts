@@ -1,93 +1,32 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes, Model, Optional } from 'sequelize';
+import { Model, Table, Column, DataType, Index, Sequelize, ForeignKey } from "sequelize-typescript";
 
 export interface AccountsAttributes {
-    id: number;
+    id?: number;
     uuid: string;
     name: string;
     gems?: number;
-    coins: number;
+    coins?: number;
     lastLogin?: string;
     totalPlayTime?: string;
 }
 
-export type AccountsPk = 'id';
-export type AccountsId = Accounts[AccountsPk];
-export type AccountsOptionalAttributes = 'id' | 'gems' | 'coins' | 'lastLogin' | 'totalPlayTime';
-export type AccountsCreationAttributes = Optional<AccountsAttributes, AccountsOptionalAttributes>;
-
-export class Accounts extends Model<AccountsAttributes, AccountsCreationAttributes> implements AccountsAttributes {
-    id!: number;
+@Table({ tableName: "accounts", timestamps: false })
+export class Accounts extends Model<AccountsAttributes, AccountsAttributes> implements AccountsAttributes {
+    @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
+    @Index({ name: "PRIMARY", using: "BTREE", order: "ASC", unique: true })
+    id?: number;
+    @Column({ type: DataType.STRING(100) })
+    @Index({ name: "uuidIndex", using: "BTREE", order: "ASC", unique: true })
     uuid!: string;
+    @Column({ type: DataType.STRING(40) })
+    @Index({ name: "nameIndex", using: "BTREE", order: "ASC", unique: true })
     name!: string;
-    gems!: number;
-    coins!: number;
+    @Column({ type: DataType.INTEGER, defaultValue: "0" })
+    gems?: number;
+    @Column({ type: DataType.INTEGER, defaultValue: "0" })
+    coins?: number;
+    @Column({ allowNull: true, type: DataType.STRING, defaultValue: "NULL" })
     lastLogin?: string;
+    @Column({ allowNull: true, type: DataType.STRING, defaultValue: "NULL" })
     totalPlayTime?: string;
-
-    static initModel(sequelize: Sequelize.Sequelize): typeof Accounts {
-        return sequelize.define(
-            'Accounts',
-            {
-                id: {
-                    autoIncrement: true,
-                    type: DataTypes.INTEGER,
-                    allowNull: false,
-                    primaryKey: true
-                },
-                uuid: {
-                    type: DataTypes.STRING(100),
-                    allowNull: false,
-                    unique: 'uuidIndex'
-                },
-                name: {
-                    type: DataTypes.STRING(40),
-                    allowNull: false,
-                    unique: 'nameIndex'
-                },
-                gems: {
-                    type: DataTypes.INTEGER,
-                    allowNull: false,
-                    defaultValue: 0
-                },
-                coins: {
-                    type: DataTypes.INTEGER,
-                    allowNull: false,
-                    defaultValue: 0
-                },
-                lastLogin: {
-                    type: DataTypes.TEXT,
-                    allowNull: true
-                },
-                totalPlayTime: {
-                    type: DataTypes.TEXT,
-                    allowNull: true
-                }
-            },
-            {
-                tableName: 'accounts',
-                timestamps: false,
-                indexes: [
-                    {
-                        name: 'PRIMARY',
-                        unique: true,
-                        using: 'BTREE',
-                        fields: [{ name: 'id' }]
-                    },
-                    {
-                        name: 'uuidIndex',
-                        unique: true,
-                        using: 'BTREE',
-                        fields: [{ name: 'uuid' }]
-                    },
-                    {
-                        name: 'nameIndex',
-                        unique: true,
-                        using: 'BTREE',
-                        fields: [{ name: 'name' }]
-                    }
-                ]
-            }
-        ) as typeof Accounts;
-    }
 }

@@ -1,112 +1,45 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes, Model, Optional } from 'sequelize';
+import { Model, Table, Column, DataType, Index, Sequelize, ForeignKey } from "sequelize-typescript";
 
 export interface AccountPunishmentsAttributes {
-    id: number;
+    id?: number;
     accountId: number;
     category: string;
     sentence: string;
     reason: string;
-    time: Date;
+    time?: Date;
     duration: number;
     admin: string;
     severity: number;
-    removed: number;
+    removed?: number;
     removedReason?: string;
     removedAdmin?: string;
 }
 
-export type AccountPunishmentsPk = 'id';
-export type AccountPunishmentsId = AccountPunishments[AccountPunishmentsPk];
-export type AccountPunishmentsOptionalAttributes = 'id' | 'time' | 'removed' | 'removedReason' | 'removedAdmin';
-export type AccountPunishmentsCreationAttributes = Optional<AccountPunishmentsAttributes, AccountPunishmentsOptionalAttributes>;
-
-export class AccountPunishments extends Model<AccountPunishmentsAttributes, AccountPunishmentsCreationAttributes> implements AccountPunishmentsAttributes {
-    id!: number;
+@Table({ tableName: "accountpunishments", timestamps: false })
+export class AccountPunishments extends Model<AccountPunishmentsAttributes, AccountPunishmentsAttributes> implements AccountPunishmentsAttributes {
+    @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
+    @Index({ name: "PRIMARY", using: "BTREE", order: "ASC", unique: true })
+    id?: number;
+    @Column({ type: DataType.INTEGER })
     accountId!: number;
+    @Column({ type: DataType.STRING(255) })
     category!: string;
+    @Column({ type: DataType.STRING(255) })
     sentence!: string;
+    @Column({ type: DataType.STRING(255) })
     reason!: string;
-    time!: Date;
+    @Column({ type: DataType.DATE, defaultValue: "current_timestamp()" })
+    time?: Date;
+    @Column({ type: DataType.DOUBLE(22) })
     duration!: number;
+    @Column({ type: DataType.STRING(255) })
     admin!: string;
+    @Column({ type: DataType.INTEGER })
     severity!: number;
-    removed!: number;
+    @Column({ field: "Removed", type: DataType.TINYINT, defaultValue: "0" })
+    removed?: number;
+    @Column({ field: "RemovedReason", allowNull: true, type: DataType.STRING(255), defaultValue: "NULL" })
     removedReason?: string;
+    @Column({ field: "RemovedAdmin", allowNull: true, type: DataType.STRING(255), defaultValue: "NULL" })
     removedAdmin?: string;
-
-    static initModel(sequelize: Sequelize.Sequelize): typeof AccountPunishments {
-        return sequelize.define(
-            'AccountPunishments',
-            {
-                id: {
-                    autoIncrement: true,
-                    type: DataTypes.INTEGER,
-                    allowNull: false,
-                    primaryKey: true
-                },
-                accountId: {
-                    type: DataTypes.INTEGER,
-                    allowNull: false
-                },
-                category: {
-                    type: DataTypes.STRING(255),
-                    allowNull: false
-                },
-                sentence: {
-                    type: DataTypes.STRING(255),
-                    allowNull: false
-                },
-                reason: {
-                    type: DataTypes.STRING(255),
-                    allowNull: false
-                },
-                time: {
-                    type: DataTypes.DATE,
-                    allowNull: false,
-                    defaultValue: Sequelize.Sequelize.fn('current_timestamp')
-                },
-                duration: {
-                    type: DataTypes.DOUBLE,
-                    allowNull: false
-                },
-                admin: {
-                    type: DataTypes.STRING(255),
-                    allowNull: false
-                },
-                severity: {
-                    type: DataTypes.INTEGER,
-                    allowNull: false
-                },
-                removed: {
-                    type: DataTypes.BOOLEAN,
-                    allowNull: false,
-                    defaultValue: 0,
-                    field: 'Removed'
-                },
-                removedReason: {
-                    type: DataTypes.STRING(255),
-                    allowNull: true,
-                    field: 'RemovedReason'
-                },
-                removedAdmin: {
-                    type: DataTypes.STRING(255),
-                    allowNull: true,
-                    field: 'RemovedAdmin'
-                }
-            },
-            {
-                tableName: 'accountpunishments',
-                timestamps: false,
-                indexes: [
-                    {
-                        name: 'PRIMARY',
-                        unique: true,
-                        using: 'BTREE',
-                        fields: [{ name: 'id' }]
-                    }
-                ]
-            }
-        ) as typeof AccountPunishments;
-    }
 }

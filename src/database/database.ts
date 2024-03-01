@@ -1,13 +1,14 @@
-import { Sequelize } from 'sequelize-typescript';
+import { ModelCtor, Sequelize } from 'sequelize-typescript';
 import { Config } from '../utils/config';
 import Logger from '../utils/log';
+import { Accounts } from './models/accounts';
 import { AccountPunishments } from './models/accountpunishments';
 import { AccountRanks } from './models/accountranks';
-import { Accounts } from './models/accounts';
 import { AccountShardTransactions } from './models/accountshardtransactions';
+import { AccountTransactions } from './models/accounttransactions';
 
 export class DatabaseManager {
-    private static sequelize: Sequelize;
+    public static sequelize: Sequelize;
     public static readonly logger: Logger = new Logger('Database');
 
     public static async init() {
@@ -19,7 +20,8 @@ export class DatabaseManager {
             password: databaseConnectionConfig.password,
             dialect: 'mysql',
             database: 'account',
-            logging: false
+            logging: false,
+            models: [Accounts, AccountPunishments, AccountRanks, AccountShardTransactions, AccountTransactions]
         });
 
         try {
@@ -30,12 +32,5 @@ export class DatabaseManager {
             DatabaseManager.logger.error(ex);
             process.exit(0);
         }
-    }
-
-    public static async initModels(){
-        AccountPunishments.initModel(this.sequelize);
-        AccountRanks.initModel(this.sequelize);
-        Accounts.initModel(this.sequelize);
-        AccountShardTransactions.initModel(this.sequelize);
     }
 }

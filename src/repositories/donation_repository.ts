@@ -1,5 +1,7 @@
 import { Accounts } from '../database/models/accounts';
 import { AccountShardTransactions } from '../database/models/accountshardtransactions';
+import { AccountTransactions } from '../database/models/accounttransactions';
+import { CurrencyRewardToken, UnknownPurchaseToken } from '../webserver/token/donor';
 import AccountRepository from './account_repository';
 
 export enum TransactionResponse {
@@ -10,14 +12,57 @@ export enum TransactionResponse {
 }
 
 export default class DonationRepository {
-    public static async RewardCoins(name: string, amount: number, source: string = ''): Promise<boolean> {
-        const account = await AccountRepository.getAccountByName(name);
+
+    
+    public static async purchaseUnknownSalesPackage(token: UnknownPurchaseToken): Promise<TransactionResponse>{
+        const account = await AccountRepository.getAccountByName(token.AccountName);
+        if (!account) return TransactionResponse.Failed;
+
+        const balance = token.CoinPurchase ? account.coins! : account.gems!;
+        if(balance < token.Cost) return TransactionResponse.InsufficientFunds;
+
+        await AccountTransactions.create({
+            accountId: account.id!,
+            coins: token.CoinPurchase ? token.Cost : 0,
+            gems: token.CoinPurchase ? 0: token.Cost,
+            salesPackageName: token.SalesPackageName,
+        })
+
+        if(token.CoinPurchase){
+            await Accounts.update(
+                {
+                    coins: account.coins! - token.Cost
+                },
+                {
+                    where: {
+                        uuid: account.uuid
+                    }
+                }
+            );
+        }else{
+            await Accounts.update(
+                {
+                    coins: account.gems! - token.Cost
+                },
+                {
+                    where: {
+                        uuid: account.uuid
+                    }
+                }
+            );
+        }
+
+        return TransactionResponse.Success;
+    }
+
+    public static async RewardCoins(token: CurrencyRewardToken): Promise<boolean> {
+        const account = await AccountRepository.getAccountByName(token.Name);
         if (!account) return false;
-        if (amount < 0) return false;
+        if (token.Amount < 0) return false;
 
         await Accounts.update(
             {
-                coins: account.coins + amount
+                coins: account.coins! + token.Amount
             },
             {
                 where: {
@@ -27,20 +72,21 @@ export default class DonationRepository {
         );
 
         await AccountShardTransactions.create({
-            accountId: account.id,
-            source: source,
-            amount: amount
+            accountId: account.id!,
+            source: token.Source,
+            amount: token.Amount
         });
 
         return true;
     }
-    public static async RewardGems(name: string, amount: number, source: string = ''): Promise<boolean> {
-        const account = await AccountRepository.getAccountByName(name);
+    public static async RewardGems(token: CurrencyRewardToken): Promise<boolean> {
+        const account = await AccountRepository.getAccountByName(token.Name);
         if (!account) return false;
-        if (amount < 0) return false;
+        if (token.Amount < 0) return false;
+
         await Accounts.update(
             {
-                gems: account.gems + amount
+                coins: account.coins! + token.Amount
             },
             {
                 where: {

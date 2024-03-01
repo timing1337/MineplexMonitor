@@ -1,66 +1,24 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes, Model, Optional } from 'sequelize';
+import { Model, Table, Column, DataType, Index, Sequelize, ForeignKey } from "sequelize-typescript";
 
 export interface AccountShardTransactionsAttributes {
-    id: number;
+    id?: number;
     accountId: number;
     source: string;
     amount: number;
-    date: Date;
+    date?: Date;
 }
 
-export type AccountShardTransactionsPk = 'id';
-export type AccountShardTransactionsId = AccountShardTransactions[AccountShardTransactionsPk];
-export type AccountShardTransactionsOptionalAttributes = 'id' | 'date';
-export type AccountShardTransactionsCreationAttributes = Optional<AccountShardTransactionsAttributes, AccountShardTransactionsOptionalAttributes>;
-
-export class AccountShardTransactions extends Model<AccountShardTransactionsAttributes, AccountShardTransactionsCreationAttributes> implements AccountShardTransactionsAttributes {
-    id!: number;
+@Table({ tableName: "accountshardtransactions", timestamps: false })
+export class AccountShardTransactions extends Model<AccountShardTransactionsAttributes, AccountShardTransactionsAttributes> implements AccountShardTransactionsAttributes {
+    @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
+    @Index({ name: "PRIMARY", using: "BTREE", order: "ASC", unique: true })
+    id?: number;
+    @Column({ type: DataType.INTEGER })
     accountId!: number;
+    @Column({ type: DataType.STRING(40) })
     source!: string;
+    @Column({ type: DataType.INTEGER })
     amount!: number;
-    date!: Date;
-
-    static initModel(sequelize: Sequelize.Sequelize): typeof AccountShardTransactions {
-        return sequelize.define(
-            'AccountShardTransactions',
-            {
-                id: {
-                    autoIncrement: true,
-                    type: DataTypes.INTEGER,
-                    allowNull: false,
-                    primaryKey: true
-                },
-                accountId: {
-                    type: DataTypes.INTEGER,
-                    allowNull: false
-                },
-                source: {
-                    type: DataTypes.STRING(40),
-                    allowNull: false
-                },
-                amount: {
-                    type: DataTypes.INTEGER,
-                    allowNull: false
-                },
-                date: {
-                    type: DataTypes.DATE,
-                    allowNull: false,
-                    defaultValue: Sequelize.Sequelize.fn('current_timestamp')
-                }
-            },
-            {
-                tableName: 'accountshardtransactions',
-                timestamps: false,
-                indexes: [
-                    {
-                        name: 'PRIMARY',
-                        unique: true,
-                        using: 'BTREE',
-                        fields: [{ name: 'id' }]
-                    }
-                ]
-            }
-        ) as typeof AccountShardTransactions;
-    }
+    @Column({ type: DataType.DATE, defaultValue: "current_timestamp()" })
+    date?: Date;
 }

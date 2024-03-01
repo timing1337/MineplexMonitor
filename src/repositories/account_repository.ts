@@ -4,6 +4,7 @@ import PunishmentRepository from './punishment_repository';
 import { Accounts } from '../database/models/accounts';
 import { AccountRanks } from '../database/models/accountranks';
 import { AccountShardTransactions } from '../database/models/accountshardtransactions';
+import { AccountTransactions } from '../database/models/accounttransactions';
 
 export default class AccountRepository {
     public static async getAccountNamesMatching(match: string): Promise<string[]> {
@@ -42,14 +43,14 @@ export default class AccountRepository {
 
     public static async getAccountToken(account: Accounts) {
         const accountToken: AccountToken = {
-            AccountId: account.id,
+            AccountId: account.id!,
             Name: account.name,
             Rank: (await AccountRanks.findAll({ where: { accountId: account.id } })).find((rank) => rank.primaryGroup == 1)!.rankIdentifier! ?? 'PLAYER',
             Time: Date.now(),
             Punishments: [],
             DonorToken: {
-                Gems: account.gems,
-                Coins: account.coins,
+                Gems: account.gems!,
+                Coins: account.coins!,
                 Donated: false,
                 SalesPackages: [],
                 UnknownSalesPackages: [],
@@ -65,9 +66,20 @@ export default class AccountRepository {
         for (const coinTransaction of coinsTransactions) {
             accountToken.DonorToken.CoinRewards.push({
                 Amount: coinTransaction.amount,
-                Date: coinTransaction.date.toString(), //?? no idea how they parse them
+                Date: coinTransaction.date!.getTime().toString(), //?? no idea how they parse them
                 Source: coinTransaction.source
             });
+        }
+
+        const unknownPackageTransactions = await AccountTransactions.findAll({ where: { accountId: account.id } });
+        for (const unknownPackageTransaction of unknownPackageTransactions) {
+            accountToken.DonorToken.UnknownSalesPackages.push(unknownPackageTransaction.salesPackageName);
+            accountToken.DonorToken.Transactions.push({
+                SalesPackageName: unknownPackageTransaction.salesPackageName,
+                Date: unknownPackageTransaction.date!.getTime().toString(),
+                Gems: unknownPackageTransaction.gems,
+                Coins: unknownPackageTransaction.coins
+            })
         }
 
         const punishClient = await PunishmentRepository.getPunishClient(account);

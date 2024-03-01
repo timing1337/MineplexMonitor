@@ -13,14 +13,15 @@ const logger = new Logger('PlayerAccount');
 export async function PurchaseUnknownSalesPackage(request: FastifyRequest<{ Body: UnknownPurchaseToken }>, reply: FastifyReply) {
     const account = await AccountRepository.getAccountByName(request.body.AccountName);
     if (!account) return reply.code(400);
+    return await DonationRepository.purchaseUnknownSalesPackage(request.body);
 }
 
 export async function CoinReward(request: FastifyRequest<{ Body: CurrencyRewardToken }>, reply: FastifyReply) {
-    reply.send(await DonationRepository.RewardCoins(request.body.Name, request.body.Amount, request.body.Source));
+    reply.send(await DonationRepository.RewardCoins(request.body));
 }
 
 export async function GemReward(request: FastifyRequest<{ Body: CurrencyRewardToken }>, reply: FastifyReply) {
-    reply.send(await DonationRepository.RewardGems(request.body.Name, request.body.Amount, request.body.Source));
+    reply.send(await DonationRepository.RewardGems(request.body));
 }
 
 export async function GetMatches(request: FastifyRequest<{ Body: string }>, reply: FastifyReply) {
@@ -67,9 +68,9 @@ export async function GetPunishClient(request: FastifyRequest<{ Body: string }>,
 }
 
 export async function Punish(request: FastifyRequest<{ Body: PunishToken }>, reply: FastifyReply) {
-    reply.send(await PunishmentRepository.Punish(request.body.Target, request.body.Category, request.body.Sentence, request.body.Reason, request.body.Duration, request.body.Admin, request.body.Severity));
+    reply.send(await PunishmentRepository.Punish(request.body));
 }
 
 export async function RemovePunishment(request: FastifyRequest<{ Body: RemovePunishToken }>, reply: FastifyReply) {
-    reply.send(await PunishmentRepository.RemovePunishment(request.body.PunishmentId, request.body.Target, request.body.Reason, request.body.Admin));
+    reply.send(await PunishmentRepository.RemovePunishment(request.body));
 }

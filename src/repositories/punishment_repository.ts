@@ -1,6 +1,6 @@
 import { AccountPunishments } from '../database/models/accountpunishments';
 import { Accounts } from '../database/models/accounts';
-import { PunishClientToken, PunishmentToken } from '../webserver/token/punish';
+import { PunishClientToken, PunishToken, PunishmentToken, RemovePunishToken } from '../webserver/token/punish';
 import AccountRepository from './account_repository';
 
 export enum PunishmentResponse {
@@ -27,14 +27,14 @@ export default class PunishmentRepository {
 
         if (punishments.length > 0) {
             punishToken.Punishments = punishments.map((punishment) => {
-                let isActive = punishment.duration < 0 /* is perm */ || Date.now() < punishment.time.getTime() + punishment.duration * 60 * 60 * 3600; /* is expired */
+                let isActive = punishment.duration < 0 /* is perm */ || Date.now() < punishment.time!.getTime() + punishment.duration * 60 * 60 * 3600; /* is expired */
                 if (punishment.removed) {
                     isActive = false;
                 }
                 return {
                     PunishmentId: punishment.id,
                     Admin: punishment.admin,
-                    Time: punishment.time.getTime(),
+                    Time: punishment.time!.getTime(),
                     Sentence: punishment.sentence,
                     Category: punishment.category,
                     Reason: punishment.reason,
@@ -50,35 +50,35 @@ export default class PunishmentRepository {
         return punishToken;
     }
 
-    public static async Punish(target: string, category: string, sentence: string, reason: string, duration: number, admin: string, severity: number): Promise<PunishmentResponse> {
-        const account = await AccountRepository.getAccountByName(target);
+    public static async Punish(token: PunishToken): Promise<PunishmentResponse> {
+        const account = await AccountRepository.getAccountByName(token.Target);
         if (!account) return PunishmentResponse.AccountDoesNotExist;
         //TODO: InsufficientPrivileges handling :3
         await AccountPunishments.create({
-            accountId: account.id,
-            admin: admin,
-            category: category,
-            sentence: sentence,
+            accountId: account.id!,
+            admin: token.Admin,
+            category: token.Category,
+            sentence: token.Sentence,
             time: new Date(),
-            reason: reason,
-            duration: duration,
-            severity: severity,
+            reason: token.Reason,
+            duration: token.Duration,
+            severity: token.Severity,
             removed: 0
         });
         return PunishmentResponse.Punished;
     }
-    public static async RemovePunishment(id: number, target: string, reason: string, admin: string): Promise<PunishmentResponse> {
-        const account = await AccountRepository.getAccountByName(target);
+    public static async RemovePunishment(token: RemovePunishToken): Promise<PunishmentResponse> {
+        const account = await AccountRepository.getAccountByName(token.Target);
         if (!account) return PunishmentResponse.AccountDoesNotExist;
         await AccountPunishments.update(
             {
                 removed: 1,
-                removedAdmin: admin,
-                removedReason: reason
+                removedAdmin: token.Admin,
+                removedReason: token.Reason
             },
             {
                 where: {
-                    id: id
+                    id: token.PunishmentId
                 }
             }
         );

@@ -13,6 +13,7 @@ export class Webserver {
         const server = fastify();
         server.setErrorHandler((error, request, reply) => {
             Webserver.logger.error(error);
+            console.log(error.stack);
         });
 
         server.register(playerAccountRouter, { prefix: '/PlayerAccount' });
