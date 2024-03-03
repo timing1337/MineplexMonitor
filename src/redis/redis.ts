@@ -16,8 +16,7 @@ export default class RedisManager {
     public static async init() {
         RedisManager.instance = new Redis({
             host: Config.config.redisConnection.address,
-            port: Config.config.redisConnection.port,
-            password: Config.config.redisConnection.password
+            port: Config.config.redisConnection.port
         });
 
         this.loadServerGroups();

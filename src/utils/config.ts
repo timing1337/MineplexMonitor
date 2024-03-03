@@ -33,8 +33,7 @@ export class Config {
             },
             redisConnection: {
                 address: '127.0.0.1',
-                port: 6379,
-                password: 'password'
+                port: 6379
             },
             webserver: {
                 listenPort: 1000
@@ -53,7 +52,6 @@ export type ConfigType = {
     redisConnection: {
         address: string;
         port: number;
-        password: string;
     };
     webserver: {
         listenPort: number;
