@@ -22,7 +22,7 @@ export default class RedisManager {
         const serverGroups = await RedisManager.instance.smembers('servergroups');
         if (serverGroups.length === 0 || !serverGroups.includes('Lobby')) {
             RedisManager.logger.log('Missing Lobby group, adding....');
-            const lobby = new ServerGroup("Lobby", "Lobby", 25700);
+            const lobby = new ServerGroup('Lobby', 'Lobby', 25700);
             lobby.arcadeGroup = false;
             lobby.maxPlayers = 50;
             RedisManager.registerServerGroup(lobby);
@@ -39,10 +39,16 @@ export default class RedisManager {
         return serverStatuses;
     }
 
+    public static async getServerGroupByName(name: string): Promise<ServerGroup> {
+        const serverGroupKey = `servergroups.${name}`;
+        return (await RedisManager.instance.hgetall(serverGroupKey)) as unknown as ServerGroup; //insane casting LMAOOO
+    }
+
     public static async registerServerGroup(group: ServerGroup) {
         const serverGroupKey = `servergroups.${group.name}`;
 
         if (await RedisManager.instance.exists(serverGroupKey)) return;
+
         await RedisManager.instance.sadd('servergroups', group.name);
         await RedisManager.instance.hsetnx(serverGroupKey, 'name', group.name);
         await RedisManager.instance.hsetnx(serverGroupKey, 'host', group.host);
