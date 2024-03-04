@@ -1,4 +1,4 @@
-import { Model, Table, Column, DataType, Index, Sequelize, ForeignKey } from "sequelize-typescript";
+import { Column, DataType, Index, Model, Table } from 'sequelize-typescript';
 
 export interface AccountShardTransactionsAttributes {
     id?: number;
@@ -8,10 +8,10 @@ export interface AccountShardTransactionsAttributes {
     date?: Date;
 }
 
-@Table({ tableName: "accountshardtransactions", timestamps: false })
+@Table({ tableName: 'accountshardtransactions', timestamps: false })
 export class AccountShardTransactions extends Model<AccountShardTransactionsAttributes, AccountShardTransactionsAttributes> implements AccountShardTransactionsAttributes {
     @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
-    @Index({ name: "PRIMARY", using: "BTREE", order: "ASC", unique: true })
+    @Index({ name: 'PRIMARY', using: 'BTREE', order: 'ASC', unique: true })
     id?: number;
     @Column({ type: DataType.INTEGER })
     accountId!: number;
@@ -19,6 +19,6 @@ export class AccountShardTransactions extends Model<AccountShardTransactionsAttr
     source!: string;
     @Column({ type: DataType.INTEGER })
     amount!: number;
-    @Column({ type: DataType.DATE, defaultValue: "current_timestamp()" })
+    @Column({ type: DataType.DATE, defaultValue: 'current_timestamp()' })
     date?: Date;
 }

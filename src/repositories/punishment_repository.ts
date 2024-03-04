@@ -1,6 +1,6 @@
 import { AccountPunishments } from '../database/models/accountpunishments';
 import { Accounts } from '../database/models/accounts';
-import { PunishClientToken, PunishToken, PunishmentToken, RemovePunishToken } from '../webserver/token/punish';
+import { PunishClientToken, PunishmentToken, PunishToken, RemovePunishToken } from '../webserver/token/punish';
 import AccountRepository from './account_repository';
 
 export enum PunishmentResponse {

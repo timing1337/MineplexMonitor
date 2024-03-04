@@ -1,12 +1,7 @@
 import { Redis } from 'ioredis';
 import { Config } from '../utils/config';
 import Logger from '../utils/log';
-import { ServerGroupPrefix } from './server/server_group';
-
-type ServerStatus = {
-    totalServers: number;
-    availableServers: number;
-};
+import { MinecraftServer, ServerGroup } from './minecraft_server_data';
 
 export default class RedisManager {
     public static instance: Redis;
@@ -20,97 +15,89 @@ export default class RedisManager {
         });
 
         this.loadServerGroups();
-        this.initServerStatus();
-    }
-
-    //Manually update totalServers/joinableServer Status
-    //Ideally you wouldnt have to do this if you have ServerMonitor
-    //TODO: Implement the same thing :yay!
-    public static async initServerStatus() {
-        var doServersCheck = async function () {
-            const serverStatuses: Map<string, ServerStatus> = new Map<string, ServerStatus>();
-            const serverStatusKeys = await RedisManager.instance.keys('serverstatus.minecraft.US.*');
-            for (const serverKey of serverStatusKeys) {
-                const serverStatus = JSON.parse((await RedisManager.instance.get(serverKey))!);
-                if (serverStatus['_tps'] == 0) {
-                    //server died, might as well delete this.
-                    await RedisManager.instance.del(serverKey);
-                    continue;
-                }
-                const serverGroup = serverStatus['_group'];
-                if (!serverStatuses.has(serverGroup)) {
-                    serverStatuses.set(serverGroup, {
-                        availableServers: 0,
-                        totalServers: 0
-                    });
-                }
-                serverStatuses.get(serverGroup)!.totalServers++;
-                if (serverStatus['_playerCount'] < serverStatus['_maxPlayerCount']) serverStatuses.get(serverGroup)!.availableServers++;
-            }
-            serverStatuses.forEach(async (status, key) => {
-                await RedisManager.instance.hset(`servergroups.${key}`, 'totalServers', status.totalServers);
-                await RedisManager.instance.hset(`servergroups.${key}`, 'joinableServers', status.availableServers);
-            });
-            setTimeout(doServersCheck, 1000);
-        };
-        doServersCheck();
     }
 
     public static async loadServerGroups() {
         const serverGroups = await RedisManager.instance.smembers('servergroups');
         if (serverGroups.length === 0 || !serverGroups.includes('Lobby')) {
-            await RedisManager.initializeServerGroup('Lobby');
-            serverGroups.push(ServerGroupPrefix.Lobby);
-            await RedisManager.initializeServerGroup('MicroBattles', 'Micro Battles', 'Micro');
-            serverGroups.push(ServerGroupPrefix.MicroBattles);
             RedisManager.logger.log('Missing Lobby group, adding....');
         }
         RedisManager.logger.log(`There are currently ${serverGroups.length} groups: ${serverGroups.join(', ')}`);
     }
 
-    public static async initializeServerGroup(name: string, npcName: string = '', gameRotation: string = name) {
-        const serverGroupKey = `servergroups.${name}`;
+    public static async getServerStatuses() {
+        const serverStatuses: Map<string, MinecraftServer> = new Map<string, MinecraftServer>();
+        const serverStatusKeys = await RedisManager.instance.keys('serverstatus.minecraft.US.*');
+        for (const serverKey of serverStatusKeys) {
+            serverStatuses.set(serverKey, JSON.parse((await RedisManager.instance.get(serverKey))!) as MinecraftServer);
+        }
+        return serverStatuses;
+    }
+
+    public static async registerServerGroup(group: ServerGroup) {
+        const serverGroupKey = `servergroups.${group.name}`;
 
         if (await RedisManager.instance.exists(serverGroupKey)) return;
+        await RedisManager.instance.sadd('servergroups', group.name);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'name', group.name);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'host', group.host);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'prefix', group.prefix);
 
-        const isArcade = !(name.includes('Lobby') || name.includes('Hub')); //Safe to assume this i guess
-        const startingGroupPort = 25600 + (await RedisManager.instance.scard('servergroups')) * 100; //with this way of doing, you'll prob have 100 servers max for each group, ig thats fair...?
+        await RedisManager.instance.hsetnx(serverGroupKey, 'minPlayers', group.minPlayers);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'maxPlayers', group.maxPlayers);
 
-        await RedisManager.instance.sadd('servergroups', name);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'name', name);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'prefix', ServerGroupPrefix[name as keyof typeof ServerGroupPrefix] ?? name);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'ram', 512); //TODO: ehm stop hardcoding this waaawa
-        await RedisManager.instance.hsetnx(serverGroupKey, 'cpu', 1);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'totalServers', 0);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'joinableServers', 0);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'portSection', startingGroupPort);
-        await RedisManager.instance.hsetnx(serverGroupKey, 'minPlayers', 1); //TODO: ehm stop hardcoding this waaawa
-        await RedisManager.instance.hsetnx(serverGroupKey, 'maxPlayers', isArcade ? 16 : 50); //Default values for arcade and hub
-        await RedisManager.instance.hsetnx(serverGroupKey, 'pvp', String(isArcade)); //dumbassery
-        await RedisManager.instance.hsetnx(serverGroupKey, 'serverType', isArcade ? 'Minigames' : 'dedicated');
-        await RedisManager.instance.hsetnx(serverGroupKey, 'addNoCheat', 'true');
-        await RedisManager.instance.hsetnx(serverGroupKey, 'addWorldEdit', 'false');
-        if (npcName !== '') await RedisManager.instance.hsetnx(serverGroupKey, 'npcName', npcName);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'ram', group.requiredRam);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'cpu', group.requiredCpu);
 
-        if (isArcade) {
-            await RedisManager.instance.hsetnx(serverGroupKey, 'tournament', 'false');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'tournamentPoints', 'false');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'teamRejoin', 'false');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'teamAutoJoin', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'teamForceBalance', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'gameAutoStart', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'gameTimeout', 'false');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'rewardGems', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'rewardItems', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'rewardStats', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'rewardAchievements', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'hotbarInventory', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'hotbarHubClock', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'playerKickIdle', 'true');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'worldZip', 'arcade.zip');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'configPath', 'plugins/Arcade');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'plugin', 'Arcade.jar');
-            await RedisManager.instance.hsetnx(serverGroupKey, 'games', gameRotation);
-        }
+        await RedisManager.instance.hsetnx(serverGroupKey, 'joinableServers', group.requiredJoinableServers);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'totalServers', group.requiredTotalServers);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'uptimes', group.uptimes);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'arcadeGroup', group.arcadeGroup);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'worldZip', group.worldZip);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'plugin', group.plugin);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'configPath', group.configPath);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'portSection', group.portSection);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'pvp', group.pvp);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'tournament', group.tournament);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'tournamentPoints', group.tournamentPoints);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'teamRejoin', group.teamRejoin);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'teamAutoJoin', group.teamAutoJoin);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'teamForceBalance', group.teamForceBalance);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'gameAutoStart', group.gameAutoStart);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'gameTimeout', group.gameTimeout);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'gameVoting', group.gameVoting);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'rewardGems', group.rewardGems);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'rewardItems', group.rewardItems);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'rewardStats', group.rewardStats);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'rewardAchievements', group.rewardAchievements);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'hotbarInventory', group.hotbarInventory);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'hotbarHubClock', group.hotbarHubClock);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'playerKickIdle', group.playerKickIdle);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'hardMaxPlayerCap', group.hardMaxPlayerCap);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'games', group.games);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'modes', group.modes);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'boosterGroup', group.boosterGroup);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'serverType', group.serverType);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'addNoCheat', group.addNoCheat);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'addWorldEdit', group.addWorldEdit);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'whitelist', group.whitelist);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'staffOnly', group.staffOnly);
+
+        await RedisManager.instance.hsetnx(serverGroupKey, 'resourcePack', group.resourcePack);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'npcName', group.npcName);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'portalBottomCornerLocation', group.portalBottomCornerLocation);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'portalTopCornerLocation', group.portalTopCornerLocation);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'teamServerKey', group.teamServerKey);
+        await RedisManager.instance.hsetnx(serverGroupKey, 'region', group.region);
     }
 }

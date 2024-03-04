@@ -1,10 +1,10 @@
 import { Op } from 'sequelize';
-import { AccountToken } from '../webserver/token/account';
-import PunishmentRepository from './punishment_repository';
-import { Accounts } from '../database/models/accounts';
 import { AccountRanks } from '../database/models/accountranks';
+import { Accounts } from '../database/models/accounts';
 import { AccountShardTransactions } from '../database/models/accountshardtransactions';
 import { AccountTransactions } from '../database/models/accounttransactions';
+import { AccountToken } from '../webserver/token/account';
+import PunishmentRepository from './punishment_repository';
 
 export default class AccountRepository {
     public static async getAccountNamesMatching(match: string): Promise<string[]> {
@@ -79,7 +79,7 @@ export default class AccountRepository {
                 Date: unknownPackageTransaction.date!.getTime().toString(),
                 Gems: unknownPackageTransaction.gems,
                 Coins: unknownPackageTransaction.coins
-            })
+            });
         }
 
         const punishClient = await PunishmentRepository.getPunishClient(account);

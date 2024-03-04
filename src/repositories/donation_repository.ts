@@ -12,24 +12,22 @@ export enum TransactionResponse {
 }
 
 export default class DonationRepository {
-
-    
-    public static async purchaseUnknownSalesPackage(token: UnknownPurchaseToken): Promise<TransactionResponse>{
+    public static async purchaseUnknownSalesPackage(token: UnknownPurchaseToken): Promise<TransactionResponse> {
         const account = await AccountRepository.getAccountByName(token.AccountName);
         if (!account) return TransactionResponse.Failed;
 
         const balance = token.CoinPurchase ? account.coins! : account.gems!;
-        if(balance < token.Cost) return TransactionResponse.InsufficientFunds;
+        if (balance < token.Cost) return TransactionResponse.InsufficientFunds;
 
         await AccountTransactions.create({
             accountId: account.id!,
             coins: token.CoinPurchase ? token.Cost : 0,
-            gems: token.CoinPurchase ? 0: token.Cost,
+            gems: token.CoinPurchase ? 0 : token.Cost,
             salesPackageName: token.SalesPackageName,
             date: new Date()
-        })
+        });
 
-        if(token.CoinPurchase){
+        if (token.CoinPurchase) {
             await Accounts.update(
                 {
                     coins: account.coins! - token.Cost
@@ -40,7 +38,7 @@ export default class DonationRepository {
                     }
                 }
             );
-        }else{
+        } else {
             await Accounts.update(
                 {
                     coins: account.gems! - token.Cost

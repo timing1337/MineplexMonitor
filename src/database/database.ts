@@ -1,9 +1,9 @@
-import { ModelCtor, Sequelize } from 'sequelize-typescript';
+import { Sequelize } from 'sequelize-typescript';
 import { Config } from '../utils/config';
 import Logger from '../utils/log';
-import { Accounts } from './models/accounts';
 import { AccountPunishments } from './models/accountpunishments';
 import { AccountRanks } from './models/accountranks';
+import { Accounts } from './models/accounts';
 import { AccountShardTransactions } from './models/accountshardtransactions';
 import { AccountTransactions } from './models/accounttransactions';
 

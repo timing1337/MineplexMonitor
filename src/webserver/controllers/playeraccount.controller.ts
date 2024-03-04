@@ -1,4 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { Accounts } from '../../database/models/accounts';
 import AccountRepository from '../../repositories/account_repository';
 import DonationRepository from '../../repositories/donation_repository';
 import PunishmentRepository from '../../repositories/punishment_repository';
@@ -6,7 +7,6 @@ import Logger from '../../utils/log';
 import { LoginToken } from '../token/account';
 import { CurrencyRewardToken, UnknownPurchaseToken } from '../token/donor';
 import { PunishToken, RemovePunishToken } from '../token/punish';
-import { Accounts } from '../../database/models/accounts';
 
 const logger = new Logger('PlayerAccount');
 
