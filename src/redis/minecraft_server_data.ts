@@ -15,7 +15,16 @@ export type MinecraftServer = {
 };
 
 export class DedicatedServer {
-    constructor(public name: string, public publicAddress: string, public privateAddress: string, public region: string, public availableCpu: string, public availableRam: string, public maxCpu: string, public maxRam: string) {}
+    constructor(
+      public name: string,
+      public publicAddress: string,
+      public privateAddress: string,
+      public region: string,
+      public availableCpu: string,
+      public availableRam: string,
+      public maxCpu: string,
+      public maxRam: string
+    ) {}
 }
 
 export enum Region {
