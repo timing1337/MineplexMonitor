@@ -86,7 +86,7 @@ export default class DonationRepository {
 
         await Accounts.update(
             {
-                coins: account.coins! + token.Amount
+                gems: account.gems! + token.Amount
             },
             {
                 where: {
