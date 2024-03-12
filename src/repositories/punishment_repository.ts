@@ -28,13 +28,11 @@ export default class PunishmentRepository {
         if (punishments.length > 0) {
             punishToken.Punishments = punishments.map((punishment) => {
                 let isActive = punishment.duration < 0 /* is perm */ || Date.now() < punishment.time!.getTime() + punishment.duration * 60 * 60 * 3600; /* is expired */
-                if (punishment.removed) {
-                    isActive = false;
-                }
+                if (punishment.removed) isActive = false;
                 return {
                     PunishmentId: punishment.id,
                     Admin: punishment.admin,
-                    Time: punishment.time!.getTime(),
+                    Time: punishment.time!.getTime() - Date.now(),
                     Sentence: punishment.sentence,
                     Category: punishment.category,
                     Reason: punishment.reason,
